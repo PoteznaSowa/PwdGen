@@ -22,10 +22,10 @@
 #include <stdio.h>
 
 /*
-* Fill a buffer with random bytes from the operating system.
-* @param	buffer	A pointer to the buffer
-* @param	length	The length of the buffer
-*/
+ * Fill a buffer with random bytes from the operating system.
+ * @param	buffer	A pointer to the buffer
+ * @param	length	The length of the buffer
+ */
 static void GetRandom(void* buffer, int length) {
 #ifdef _WIN32
 	/*
@@ -46,10 +46,11 @@ static void GetRandom(void* buffer, int length) {
 	IO_STATUS_BLOCK iosb;
 	UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\Device\\CNG");
 	OBJECT_ATTRIBUTES oa;
+	ULONG ioctl = length < 16384 ? IOCTL_KSEC_RNG : IOCTL_KSEC_RNG_REKEY;
 
 	InitializeObjectAttributes(&oa, &path, 0, NULL, NULL);
 	NtOpenFile(&dev, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
-	NtDeviceIoControlFile(dev, NULL, NULL, NULL, &iosb, IOCTL_KSEC_RNG_REKEY, NULL, 0, buffer, length);
+	NtDeviceIoControlFile(dev, NULL, NULL, NULL, &iosb, ioctl, NULL, length, buffer, length);
 	NtClose(dev);
 #else	// Linux
 	// Use a device file.
@@ -68,11 +69,11 @@ static void GetRandom(void* buffer, int length) {
 }
 
 /*
-* Divides a 64-bit integer and returns a remainder plus some offset.
-* @param	n	Dividend
-* @param	m	Divisor
-* @param	o	Modulo offset
-*/
+ * Divides a 64-bit integer and returns a remainder plus some offset.
+ * @param	n	Dividend
+ * @param	m	Divisor
+ * @param	o	Modulo offset
+ */
 static int PullModulo(unsigned long long* n, int m, int o) {
 	int r = *n % m + o;
 	*n /= m;
@@ -80,11 +81,11 @@ static int PullModulo(unsigned long long* n, int m, int o) {
 }
 
 /*
-* Swaps two array elements.
-* @param	s	Array
-* @param	i1	First element index
-* @param	i2	Second element index
-*/
+ * Swaps two array elements.
+ * @param	s	Array
+ * @param	i1	First element index
+ * @param	i2	Second element index
+ */
 static void Swap(char s[], int i1, int i2) {
 	char c = s[i1];
 	s[i1] = s[i2];
@@ -97,11 +98,11 @@ __cdecl
 #endif
 main() {
 	/*
-	* Generate and show random text which consists of:
-	* - 16 ASCII characters;
-	* - 6 decimal digits;
-	* - 32 hexadecimal digits.
-	*/
+	 * Generate and show random text which consists of:
+	 * - 16 ASCII characters;
+	 * - 6 decimal digits;
+	 * - 32 hexadecimal digits.
+	 */
 
 	unsigned long long rnum;
 	unsigned long long rnum2[2];
@@ -112,12 +113,12 @@ main() {
 	rnum = rnum2[0];
 
 	/*
-	* It is guaranteed that the password contains at least one of these:
-	* - digit;
-	* - upper letter;
-	* - lower letter;
-	* - punctuation symbol.
-	*/
+	 * It is guaranteed that the password contains at least one of these:
+	 * - digit;
+	 * - upper letter;
+	 * - lower letter;
+	 * - punctuation symbol.
+	 */
 	const char puncts[] = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 	pwd[0] = PullModulo(&rnum, 10, '0');
 	pwd[1] = PullModulo(&rnum, 26, 'A');
