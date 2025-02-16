@@ -26,7 +26,7 @@
  * @param	buffer	A pointer to the buffer
  * @param	length	The length of the buffer
  */
-static void GetRandom(void* buffer, int length) {
+static void GetRandom(void* buffer, unsigned length) {
 #ifdef _WIN32
 	/*
 	 * Get randomness from the kernel-mode CNG driver.
