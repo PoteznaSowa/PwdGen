@@ -135,9 +135,9 @@ main() {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
 	Swap(pwd, 0, PullModulo(&rnum, 16, 0));
-	Swap(pwd, 1, PullModulo(&rnum, 15, 0));
-	Swap(pwd, 2, PullModulo(&rnum, 14, 0));
-	Swap(pwd, 3, PullModulo(&rnum, 13, 0));
+	Swap(pwd, 1, PullModulo(&rnum, 15, 1));
+	Swap(pwd, 2, PullModulo(&rnum, 14, 2));
+	Swap(pwd, 3, PullModulo(&rnum, 13, 3));
 
 	printf("%.16s %.6d %016llx%016llx\n", pwd, (int)(rnum2[0] % 1000000), rnum2[0], rnum2[1]);
 	return 0;
