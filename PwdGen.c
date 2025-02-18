@@ -15,7 +15,7 @@
 #define IOCTL_KSEC_RNG_REKEY CTL_CODE(FILE_DEVICE_KSEC, 2, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #endif
 
-#else // _WIN32
+#elif defined(__linux)
 #include <sys/random.h>
 #endif
 
@@ -40,6 +40,9 @@ static void GetRandom(void* buffer, unsigned length) {
 	 * the output of SystemPrng in the CNG driver.
 	 * So we access the driver directly.
 	 * https://github.com/gtworek/PSBits/blob/master/Misc/IOCTL_KSEC_RNG.c
+	 * Moreover, the aforementioned documented functions are handled by a
+	 * user-mode CSPRNG, which is relatively easier to compromise than a
+	 * kernel-mode one.
 	 */
 
 	HANDLE dev;
@@ -52,12 +55,7 @@ static void GetRandom(void* buffer, unsigned length) {
 	NtOpenFile(&dev, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
 	NtDeviceIoControlFile(dev, NULL, NULL, NULL, &iosb, ioctl, NULL, length, buffer, length);
 	NtClose(dev);
-#else	// Linux
-	// Use a device file.
-	//FILE* f = fopen("/dev/random", "rb");
-	//fread(buffer, 1, length, f);
-	//fclose(f);
-
+#elif defined(__linux)
 	// Use a system call.
 	getrandom(buffer, length, GRND_RANDOM);
 
@@ -65,6 +63,11 @@ static void GetRandom(void* buffer, unsigned length) {
 	//unsigned long long* p = buffer;
 	//__builtin_ia32_rdrand64_step(p);
 	//__builtin_ia32_rdrand64_step(p + 1);
+#else
+	// Use a device file.
+	FILE* f = fopen("/dev/random", "rb");
+	fread(buffer, 1, length, f);
+	fclose(f);
 #endif
 }
 
