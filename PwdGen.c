@@ -57,7 +57,7 @@ static void GetRandom(void* buffer, unsigned length) {
 	NtClose(dev);
 #elif defined(__linux)
 	// Use a system call.
-	getrandom(buffer, length, GRND_RANDOM);
+	getrandom(buffer, length, 0);
 
 	// Use an RDRAND instruction.
 	//unsigned long long* p = buffer;
