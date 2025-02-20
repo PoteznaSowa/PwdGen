@@ -55,18 +55,30 @@ static void GetRandom(void* buffer, unsigned length) {
 	NtOpenFile(&dev, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
 	NtDeviceIoControlFile(dev, NULL, NULL, NULL, &iosb, ioctl, NULL, length, buffer, length);
 	NtClose(dev);
-#elif defined(__linux)
+#else
+	unsigned char* _b = buffer;
+#if defined(__linux)
 	// Use a system call.
-	getrandom(buffer, length, 0);
+	do {
+		ssize_t r = getrandom(_b, length, 0);
+		if (r == -1) {
+			break;
+		}
+		_b += r;
+		length -= r;
+	} while (length);
+	if (!length) {
+		return;
+	}
 
 	// Use an RDRAND instruction.
 	//unsigned long long* p = buffer;
 	//__builtin_ia32_rdrand64_step(p);
 	//__builtin_ia32_rdrand64_step(p + 1);
-#else
+#endif
 	// Use a device file.
-	FILE* f = fopen("/dev/random", "rb");
-	fread(buffer, 1, length, f);
+	FILE* f = fopen("/dev/urandom", "rb");
+	fread(_b, 1, length, f);
 	fclose(f);
 #endif
 }
