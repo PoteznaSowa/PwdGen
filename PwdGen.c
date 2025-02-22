@@ -15,8 +15,12 @@
 #define IOCTL_KSEC_RNG_REKEY CTL_CODE(FILE_DEVICE_KSEC, 2, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #endif
 
-#elif defined(__linux)
+#else
+#ifdef __linux
 #include <sys/random.h>
+#endif
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #include <stdio.h>
@@ -57,7 +61,7 @@ static void GetRandom(void* buffer, unsigned length) {
 	NtClose(dev);
 #else
 	unsigned char* _b = buffer;
-#if defined(__linux)
+#ifdef __linux
 	// Use a system call.
 	do {
 		ssize_t r = getrandom(_b, length, 0);
@@ -77,9 +81,19 @@ static void GetRandom(void* buffer, unsigned length) {
 	//__builtin_ia32_rdrand64_step(p + 1);
 #endif
 	// Use a device file.
-	FILE* f = fopen("/dev/urandom", "rb");
-	fread(_b, 1, length, f);
-	fclose(f);
+	int f = open("/dev/urandom", O_RDONLY);
+	do {
+		ssize_t r = read(f, _b, length);
+		if (r == -1) {
+			break;
+		}
+		_b += r;
+		length -= r;
+	} while (length);
+	close(f);
+	//if (!length) {
+	//	return;
+	//}
 #endif
 }
 
