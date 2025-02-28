@@ -121,11 +121,7 @@ static void Swap(char s[], int i1, int i2) {
 	s[i2] = c;
 }
 
-int
-#ifdef _WIN32
-__cdecl
-#endif
-main() {
+int main() {
 	/*
 	 * Generate and show random text which consists of:
 	 * - 16 ASCII characters;
