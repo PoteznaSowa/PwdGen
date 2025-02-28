@@ -98,10 +98,11 @@ static void GetRandom(void* buffer, unsigned length) {
 }
 
 /*
- * Divides a 64-bit integer and returns a remainder plus some offset.
+ * Divides a 64-bit integer dividend in place.
  * @param	n	Dividend
  * @param	m	Divisor
  * @param	o	Modulo offset
+ * @return	Remainder plus offset
  */
 static int PullModulo(unsigned long long* n, int m, int o) {
 	int r = *n % m + o;
@@ -111,7 +112,7 @@ static int PullModulo(unsigned long long* n, int m, int o) {
 
 /*
  * Swaps two array elements.
- * @param	s	Array
+ * @param	s	Array to swap elements in
  * @param	i1	First element index
  * @param	i2	Second element index
  */
