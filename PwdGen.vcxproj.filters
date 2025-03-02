@@ -18,5 +18,13 @@
     <ClCompile Include="PwdGen.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="osrng.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="osrng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

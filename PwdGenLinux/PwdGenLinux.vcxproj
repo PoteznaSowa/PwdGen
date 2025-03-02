@@ -99,7 +99,11 @@
     <TargetName>pwdgen</TargetName>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\osrng.c" />
     <ClCompile Include="..\PwdGen.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\osrng.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
