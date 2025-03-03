@@ -34,12 +34,16 @@ void OsRng(void* buffer, unsigned length) {
 	 * - BCryptGenRandom;
 	 * - ProcessPrng,
 	 * but all these functions in turn produce random numbers derived from
-	 * the output of SystemPrng in the CNG driver.
-	 * So we access the driver directly.
-	 * https://github.com/gtworek/PSBits/blob/master/Misc/IOCTL_KSEC_RNG.c
+	 * the output of SystemPrng in the CNG driver. We access the driver
+	 * directly.
 	 * Moreover, the aforementioned documented functions are handled by a
 	 * user-mode CSPRNG, which is relatively easier to compromise than a
 	 * kernel-mode one.
+	 * 
+	 * References:
+	 * https://aka.ms/win10rng
+	 * https://github.com/gtworek/PSBits/blob/master/Misc/IOCTL_KSEC_RNG.c
+	 * https://learn.microsoft.com/en-us/windows/security/security-foundations/certification/fips-140-validation
 	 */
 
 	static HANDLE dev = NULL;
