@@ -43,7 +43,7 @@ int main() {
 	rnum = rnum2[0];
 
 	/*
-	 * It is guaranteed that the password contains at least one of these:
+	 * It is guaranteed that the password contains at least one:
 	 * - digit;
 	 * - upper letter;
 	 * - lower letter;
@@ -64,6 +64,7 @@ int main() {
 	for (int i = 10; i < 16; i++) {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
+
 	Swap(pwd, 0, PullModulo(&rnum, 16, 0));
 	Swap(pwd, 1, PullModulo(&rnum, 15, 1));
 	Swap(pwd, 2, PullModulo(&rnum, 14, 2));
