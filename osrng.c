@@ -52,20 +52,21 @@ void OsRng(void* buffer, unsigned length) {
 	IO_STATUS_BLOCK iosb;
 	NTSTATUS status;
 
+	// Make sure we have only one open handle in case when multiple
+	// threads are calling the function at the same time.
 	if (dev == NULL) {
-		if (!InterlockedExchange(&dev_busy, 1)) {
+		while (InterlockedExchange(&dev_busy, 1)) {
+			SwitchToThread();
+		}
+		if (dev == NULL) {
 			HANDLE h;
 			UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\Device\\CNG");
 			OBJECT_ATTRIBUTES oa;
 			InitializeObjectAttributes(&oa, &path, 0, NULL, NULL);
 			status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
 			dev = NT_SUCCESS(status) ? h : NULL;
-			InterlockedExchange(&dev_busy, 0);
-		} else {
-			do {
-				SwitchToThread();
-			} while (InterlockedCompareExchange(&dev_busy, 0, 0));
 		}
+		InterlockedExchange(&dev_busy, 0);
 	}
 
 	ULONG ioctl = length < 16384 ? IOCTL_KSEC_RNG : IOCTL_KSEC_RNG_REKEY;
