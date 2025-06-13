@@ -47,44 +47,42 @@ void OsRng(void* buffer, unsigned length) {
 	 */
 
 	static volatile HANDLE dev = NULL;
-	static volatile LONG dev_flag = 0;
+	static volatile LONG dev_busy = 0;
 
 	IO_STATUS_BLOCK iosb;
 	NTSTATUS status;
 
 	if (dev == NULL) {
-		if (!InterlockedExchange(&dev_flag, 1)) {
+		if (!InterlockedExchange(&dev_busy, 1)) {
+			HANDLE h;
 			UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\Device\\CNG");
 			OBJECT_ATTRIBUTES oa;
 			InitializeObjectAttributes(&oa, &path, 0, NULL, NULL);
-			status = NtOpenFile(&dev, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
-			if (!NT_SUCCESS(status)) {
-				dev = NULL;
-			}
-			InterlockedExchange(&dev_flag, 0);
+			status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
+			dev = NT_SUCCESS(status) ? h : NULL;
+			InterlockedExchange(&dev_busy, 0);
 		} else {
 			do {
 				SwitchToThread();
-			} while (InterlockedCompareExchange(&dev_flag, 0, 0));
+			} while (InterlockedCompareExchange(&dev_busy, 0, 0));
 		}
 	}
 
 	ULONG ioctl = length < 16384 ? IOCTL_KSEC_RNG : IOCTL_KSEC_RNG_REKEY;
-
 	status = NtDeviceIoControlFile(dev, NULL, NULL, NULL, &iosb, ioctl, NULL, length, buffer, length);
 
 	//NtClose(dev);
 	//dev = NULL;
 #else
-	unsigned char* _b = buffer;
+	unsigned char* b = buffer;
 #ifdef __linux
 	// Use a system call.
 	do {
-		ssize_t r = getrandom(_b, length, 0);
+		ssize_t r = getrandom(b, length, 0);
 		if (r == -1) {
 			break;
 		}
-		_b += r;
+		b += r;
 		length -= r;
 	} while (length);
 	if (!length) {
@@ -94,11 +92,11 @@ void OsRng(void* buffer, unsigned length) {
 	// Use a device file.
 	int f = open("/dev/urandom", O_RDONLY);
 	do {
-		ssize_t r = read(f, _b, length);
+		ssize_t r = read(f, b, length);
 		if (r == -1) {
 			break;
 		}
-		_b += r;
+		b += r;
 		length -= r;
 	} while (length);
 	close(f);
