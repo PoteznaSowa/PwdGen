@@ -54,7 +54,7 @@ int main() {
 	pwd[1] = PullModulo(&rnum, 26, 'A');
 	pwd[2] = PullModulo(&rnum, 26, 'a');
 	pwd[3] = puncts[PullModulo(&rnum, 32, 0)];
-	
+
 	for (int i = 4; i < 10; i++) {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
