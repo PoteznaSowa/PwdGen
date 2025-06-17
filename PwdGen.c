@@ -29,14 +29,14 @@ static void Swap(char s[], int i1, int i2) {
 int main() {
 	/*
 	 * Generate and show random text which consists of:
-	 * - 16 ASCII characters;
+	 * - 15 ASCII characters;
 	 * - 6 decimal digits;
 	 * - 32 hexadecimal digits.
 	 */
 
 	unsigned long long rnum;
 	unsigned long long rnum2[2];
-	char pwd[16];
+	char pwd[15];
 
 	OsRng(rnum2, sizeof(rnum2));
 
@@ -61,15 +61,15 @@ int main() {
 
 	rnum = rnum2[1];
 
-	for (int i = 10; i < 16; i++) {
+	for (int i = 10; i < 15; i++) {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
 
-	Swap(pwd, 0, PullModulo(&rnum, 16, 0));
-	Swap(pwd, 1, PullModulo(&rnum, 15, 1));
-	Swap(pwd, 2, PullModulo(&rnum, 14, 2));
-	Swap(pwd, 3, PullModulo(&rnum, 13, 3));
+	Swap(pwd, 0, PullModulo(&rnum, 15, 0));
+	Swap(pwd, 1, PullModulo(&rnum, 14, 1));
+	Swap(pwd, 2, PullModulo(&rnum, 13, 2));
+	Swap(pwd, 3, PullModulo(&rnum, 12, 3));
 
-	printf("%.16s %.6d %016llx%016llx\n", pwd, (int)(rnum2[0] % 1000000), rnum2[0], rnum2[1]);
+	printf("%.15s %.6d %016llx%016llx\n", pwd, (int)(rnum2[0] % 1000000), rnum2[0], rnum2[1]);
 	return 0;
 }
