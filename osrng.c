@@ -62,8 +62,15 @@ void OsRng(void* buffer, unsigned length) {
 			HANDLE h;
 			UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\Device\\CNG");
 			OBJECT_ATTRIBUTES oa;
-			InitializeObjectAttributes(&oa, &path, 0, NULL, NULL);
-			status = NtOpenFile(&h, FILE_READ_DATA, &oa, &iosb, FILE_SHARE_READ, 0);
+			InitializeObjectAttributes(&oa, &path, OBJ_CASE_INSENSITIVE, NULL, NULL);
+			status = NtOpenFile(
+				&h,
+				FILE_READ_DATA,
+				&oa,
+				&iosb,
+				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+				0
+			);
 			dev = NT_SUCCESS(status) ? h : NULL;
 		}
 		InterlockedExchange(&dev_busy, 0);
