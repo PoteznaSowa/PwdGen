@@ -56,6 +56,7 @@ void OsRng(void* buffer, unsigned length) {
 	// threads are calling the function at the same time.
 	if (dev == NULL) {
 		while (InterlockedExchange(&dev_busy, 1)) {
+			YieldProcessor();
 			SwitchToThread();
 		}
 		if (dev == NULL) {
