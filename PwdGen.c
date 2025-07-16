@@ -1,3 +1,12 @@
+#if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#include <cpuid.h>
+#include <immintrin.h>
+#endif
+#endif
+
 #include <stdio.h>
 #include "osrng.h"
 
@@ -26,19 +35,100 @@ static void Swap(char s[], int i1, int i2) {
 	s[i2] = c;
 }
 
+static void FillRand(unsigned long long* buffer, unsigned length) {
+#if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
+#if defined(_M_AMD64) || (__x86_64__)
+	unsigned long long* b = buffer;
+#else
+	unsigned* b = buffer;
+	length <<= 1;
+#endif
+
+	int max_cpuid;
+	int rdrand_available = 0;
+	int rdseed_available = 0;
+
+#ifdef _MSC_VER
+	int regs[4];
+	__cpuid(regs, 0);
+	max_cpuid = regs[0];
+
+	if (max_cpuid >= 1) {
+		__cpuid(regs, 1);
+		rdrand_available = _bittest((const long*)regs + 2, 30);
+	}
+	if (max_cpuid >= 7) {
+		__cpuid(regs, 7);
+		rdseed_available = _bittest((const long*)regs + 1, 18);
+	}
+#else
+	int eax, ebx, ecx, edx;
+	__cpuid(0, eax, ebx, ecx, edx);
+	max_cpuid = eax;
+
+	if (max_cpuid >= 1) {
+		__cpuid(1, eax, ebx, ecx, edx);
+		rdrand_available = !!(ecx & bit_RDRND);
+	}
+	if (max_cpuid >= 7) {
+		__cpuid(7, eax, ebx, ecx, edx);
+		rdseed_available = !!(ebx & bit_RDSEED);
+	}
+#endif
+
+	if (rdseed_available) {
+		while (length) {
+			for (int i = 10; i; i--) {
+#if defined(_M_AMD64) || (__x86_64__)
+				if (_rdseed64_step(b)) {
+#else
+				if (_rdseed32_step(b)) {
+#endif
+					goto rdseed_ok;
+				}
+			}
+			break;
+		rdseed_ok:
+			b++;
+			length--;
+		}
+	}
+	if (rdrand_available) {
+		while (length) {
+			for (int i = 10; i; i--) {
+#if defined(_M_AMD64) || (__x86_64__)
+				if (_rdrand64_step(b)) {
+#else
+				if (_rdrand32_step(b)) {
+#endif
+					goto rdseed_ok;
+				}
+			}
+			break;
+		rdrand_ok:
+			b++;
+			length--;
+		}
+	}
+#endif
+	if (length) {
+		OsRng(buffer, length * sizeof(buffer[0]));
+	}
+}
+
 int main() {
 	/*
 	 * Generate and show random text which consists of:
-	 * - 15 ASCII characters;
+	 * - 16 ASCII characters;
 	 * - 6 decimal digits;
 	 * - 32 hexadecimal digits.
 	 */
 
 	unsigned long long rnum;
 	unsigned long long rnum2[2];
-	char pwd[15];
+	char pwd[16];
 
-	OsRng(rnum2, sizeof(rnum2));
+	FillRand(rnum2, sizeof(rnum2) / sizeof(unsigned long long));
 
 	rnum = rnum2[0];
 
@@ -61,7 +151,7 @@ int main() {
 
 	rnum = rnum2[1];
 
-	for (int i = 10; i < 15; i++) {
+	for (int i = 10; i < 16; i++) {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
 
@@ -70,6 +160,6 @@ int main() {
 	Swap(pwd, 2, PullModulo(&rnum, 13, 2));
 	Swap(pwd, 3, PullModulo(&rnum, 12, 3));
 
-	printf("%.15s %.6d %016llx%016llx\n", pwd, (int)(rnum2[0] % 1000000), rnum2[0], rnum2[1]);
+	printf("%.16s %.6d %016llx%016llx\n", pwd, (int)(rnum2[0] % 1000000), rnum2[0], rnum2[1]);
 	return 0;
 }
