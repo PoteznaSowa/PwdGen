@@ -37,7 +37,7 @@ static void Swap(char s[], int i1, int i2) {
 
 static void FillRand(unsigned long long* buffer, unsigned length) {
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
-#if defined(_M_AMD64) || (__x86_64__)
+#if defined(_M_AMD64) || defined(__x86_64__)
 	unsigned long long* b = buffer;
 #else
 	unsigned* b = buffer;
@@ -79,7 +79,7 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 	if (rdseed_available) {
 		while (length) {
 			for (int i = 10; i; i--) {
-#if defined(_M_AMD64) || (__x86_64__)
+#if defined(_M_AMD64) || defined(__x86_64__)
 				if (_rdseed64_step(b)) {
 #else
 				if (_rdseed32_step(b)) {
@@ -96,12 +96,12 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 	if (rdrand_available) {
 		while (length) {
 			for (int i = 10; i; i--) {
-#if defined(_M_AMD64) || (__x86_64__)
+#if defined(_M_AMD64) || defined(__x86_64__)
 				if (_rdrand64_step(b)) {
 #else
 				if (_rdrand32_step(b)) {
 #endif
-					goto rdseed_ok;
+					goto rdrand_ok;
 				}
 			}
 			break;
@@ -110,10 +110,12 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 			length--;
 		}
 	}
-#endif
 	if (length) {
-		OsRng(buffer, length * sizeof(buffer[0]));
+		OsRng(b, length * sizeof(*b));
 	}
+#else
+	OsRng(buffer, length * sizeof(*buffer));
+#endif
 }
 
 int main() {
