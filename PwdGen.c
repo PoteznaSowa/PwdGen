@@ -39,14 +39,20 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
 #if defined(_M_AMD64) || defined(__x86_64__)
 	unsigned long long* b = buffer;
+	unsigned long long n;
 #else
 	unsigned* b = buffer;
 	length <<= 1;
+	unsigned n;
 #endif
 
 	int max_cpuid;
 	int rdrand_available = 0;
 	int rdseed_available = 0;
+
+	if (!length) {
+		return;
+	}
 
 #ifdef _MSC_VER
 	int regs[4];
@@ -77,37 +83,41 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 #endif
 
 	if (rdseed_available) {
-		while (length) {
+		for (;;) {
 			for (int i = 10; i; i--) {
 #if defined(_M_AMD64) || defined(__x86_64__)
-				if (_rdseed64_step(b)) {
+				if (_rdseed64_step(&n)) {
 #else
-				if (_rdseed32_step(b)) {
+				if (_rdseed32_step(&n)) {
 #endif
+					*b++ = n;
 					goto rdseed_ok;
 				}
 			}
 			break;
 		rdseed_ok:
-			b++;
-			length--;
+			if (!--length) {
+				return;
+			}
 		}
 	}
 	if (rdrand_available) {
-		while (length) {
+		for (;;) {
 			for (int i = 10; i; i--) {
 #if defined(_M_AMD64) || defined(__x86_64__)
-				if (_rdrand64_step(b)) {
+				if (_rdrand64_step(&n)) {
 #else
-				if (_rdrand32_step(b)) {
+				if (_rdrand32_step(&n)) {
 #endif
+					*b++ = n;
 					goto rdrand_ok;
 				}
 			}
 			break;
 		rdrand_ok:
-			b++;
-			length--;
+			if (!--length) {
+				return;
+			}
 		}
 	}
 	if (length) {
