@@ -16,9 +16,7 @@
 #endif
 
 #else
-#ifdef __linux
 #include <sys/random.h>
-#endif
 #include <fcntl.h>
 #include <unistd.h>
 #endif
@@ -46,6 +44,7 @@ void OsRng(void* buffer, unsigned length) {
 	 * https://learn.microsoft.com/en-us/windows/security/security-foundations/certification/fips-140-validation
 	 */
 
+#if 0
 	static volatile HANDLE dev = NULL;
 	static volatile LONG dev_busy = 0;
 
@@ -83,11 +82,31 @@ void OsRng(void* buffer, unsigned length) {
 	//NtClose(dev);
 	//dev = NULL;
 #else
+	IO_STATUS_BLOCK iosb;
+	HANDLE h;
+	UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\Device\\CNG");
+	OBJECT_ATTRIBUTES oa;
+
+	InitializeObjectAttributes(&oa, &path, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	NtOpenFile(
+		&h,
+		FILE_READ_DATA,
+		&oa,
+		&iosb,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		0
+	);
+	ULONG ioctl = IOCTL_KSEC_RNG_REKEY;
+	NtDeviceIoControlFile(h, NULL, NULL, NULL, &iosb, ioctl, NULL, length, buffer, length);
+	CloseHandle(h);
+#endif
+
+#else	// _WIN32
 	unsigned char* b = buffer;
-#ifdef __linux
+
 	// Use a system call.
 	do {
-		ssize_t r = getrandom(b, length, 0);
+		ssize_t r = getrandom(b, length, GRND_RANDOM);
 		if (r == -1) {
 			break;
 		}
@@ -97,9 +116,9 @@ void OsRng(void* buffer, unsigned length) {
 	if (!length) {
 		return;
 	}
-#endif
+
 	// Use a device file.
-	int f = open("/dev/urandom", O_RDONLY);
+	int f = open("/dev/random", O_RDONLY);
 	do {
 		ssize_t r = read(f, b, length);
 		if (r == -1) {

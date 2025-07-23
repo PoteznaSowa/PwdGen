@@ -35,24 +35,16 @@ static void Swap(char s[], int i1, int i2) {
 	s[i2] = c;
 }
 
-static void FillRand(unsigned long long* buffer, unsigned length) {
+static void FillRand(unsigned long long buffer[2]) {
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
 #if defined(_M_AMD64) || defined(__x86_64__)
-	unsigned long long* b = buffer;
-	unsigned long long n;
 #else
 	unsigned* b = buffer;
-	length <<= 1;
-	unsigned n;
 #endif
 
 	int max_cpuid;
 	int rdrand_available = 0;
 	int rdseed_available = 0;
-
-	if (!length) {
-		return;
-	}
 
 #ifdef _MSC_VER
 	int regs[4];
@@ -61,11 +53,11 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 
 	if (max_cpuid >= 1) {
 		__cpuid(regs, 1);
-		rdrand_available = _bittest((const long*)regs + 2, 30);
+		rdrand_available = (regs[2] >> 30) & 1;
 	}
 	if (max_cpuid >= 7) {
 		__cpuid(regs, 7);
-		rdseed_available = _bittest((const long*)regs + 1, 18);
+		rdseed_available = (regs[1] >> 18) & 1;
 	}
 #else
 	int eax, ebx, ecx, edx;
@@ -83,49 +75,31 @@ static void FillRand(unsigned long long* buffer, unsigned length) {
 #endif
 
 	if (rdseed_available) {
-		for (;;) {
-			for (int i = 10; i; i--) {
 #if defined(_M_AMD64) || defined(__x86_64__)
-				if (_rdseed64_step(&n)) {
+		_rdseed64_step(buffer + 0);
+		_rdseed64_step(buffer + 1);
 #else
-				if (_rdseed32_step(&n)) {
+		_rdseed32_step(b + 0);
+		_rdseed32_step(b + 1);
+		_rdseed32_step(b + 2);
+		_rdseed32_step(b + 3);
 #endif
-					*b++ = n;
-					goto rdseed_ok;
-				}
-			}
-			break;
-		rdseed_ok:
-			if (!--length) {
-				return;
-			}
-		}
+		return;
 	}
 	if (rdrand_available) {
-		for (;;) {
-			for (int i = 10; i; i--) {
 #if defined(_M_AMD64) || defined(__x86_64__)
-				if (_rdrand64_step(&n)) {
+		_rdrand64_step(buffer + 0);
+		_rdrand64_step(buffer + 1);
 #else
-				if (_rdrand32_step(&n)) {
+		_rdrand32_step(b + 0);
+		_rdrand32_step(b + 1);
+		_rdrand32_step(b + 2);
+		_rdrand32_step(b + 3);
 #endif
-					*b++ = n;
-					goto rdrand_ok;
-				}
-			}
-			break;
-		rdrand_ok:
-			if (!--length) {
-				return;
-			}
-		}
+		return;
 	}
-	if (length) {
-		OsRng(b, length * sizeof(*b));
-	}
-#else
-	OsRng(buffer, length * sizeof(*buffer));
-#endif
+#endif	// x86
+	OsRng(buffer, sizeof(*buffer) * 2);
 }
 
 int main() {
@@ -140,7 +114,7 @@ int main() {
 	unsigned long long rnum2[2];
 	char pwd[16];
 
-	FillRand(rnum2, sizeof(rnum2) / sizeof(unsigned long long));
+	FillRand(rnum2);
 
 	rnum = rnum2[0];
 
@@ -151,7 +125,7 @@ int main() {
 	 * - lower letter;
 	 * - punctuation symbol.
 	 */
-	const char puncts[] = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+	const char puncts[32] = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 	pwd[0] = PullModulo(&rnum, 10, '0');
 	pwd[1] = PullModulo(&rnum, 26, 'A');
 	pwd[2] = PullModulo(&rnum, 26, 'a');
