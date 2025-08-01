@@ -39,7 +39,7 @@ static void FillRand(unsigned long long buffer[2]) {
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
 #if defined(_M_AMD64) || defined(__x86_64__)
 #else
-	unsigned* b = buffer;
+	unsigned* b = (void*)buffer;
 #endif
 
 	int max_cpuid;
