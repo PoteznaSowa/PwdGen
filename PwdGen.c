@@ -35,12 +35,13 @@ static void Swap(char s[], int i1, int i2) {
 	s[i2] = c;
 }
 
-static void FillRand(unsigned long long buffer[2]) {
+typedef union {
+	unsigned long long u64[2];
+	unsigned u32[4];
+} PwdData;
+
+static void FillRand(PwdData* buffer) {
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386__) || defined(__x86_64__)
-#if defined(_M_AMD64) || defined(__x86_64__)
-#else
-	unsigned* b = (void*)buffer;
-#endif
 
 	int max_cpuid;
 	int rdrand_available = 0;
@@ -76,30 +77,30 @@ static void FillRand(unsigned long long buffer[2]) {
 
 	if (rdseed_available) {
 #if defined(_M_AMD64) || defined(__x86_64__)
-		_rdseed64_step(buffer + 0);
-		_rdseed64_step(buffer + 1);
+		_rdseed64_step(&buffer->u64[0]);
+		_rdseed64_step(&buffer->u64[1]);
 #else
-		_rdseed32_step(b + 0);
-		_rdseed32_step(b + 1);
-		_rdseed32_step(b + 2);
-		_rdseed32_step(b + 3);
+		_rdseed32_step(&buffer->u32[0]);
+		_rdseed32_step(&buffer->u32[1]);
+		_rdseed32_step(&buffer->u32[2]);
+		_rdseed32_step(&buffer->u32[3]);
 #endif
 		return;
 	}
 	if (rdrand_available) {
 #if defined(_M_AMD64) || defined(__x86_64__)
-		_rdrand64_step(buffer + 0);
-		_rdrand64_step(buffer + 1);
+		_rdrand64_step(&buffer->u64[0]);
+		_rdrand64_step(&buffer->u64[1]);
 #else
-		_rdrand32_step(b + 0);
-		_rdrand32_step(b + 1);
-		_rdrand32_step(b + 2);
-		_rdrand32_step(b + 3);
+		_rdrand32_step(&buffer->u32[0]);
+		_rdrand32_step(&buffer->u32[1]);
+		_rdrand32_step(&buffer->u32[2]);
+		_rdrand32_step(&buffer->u32[3]);
 #endif
 		return;
 	}
 #endif	// x86
-	OsRng(buffer, sizeof(*buffer) * 2);
+	OsRng(buffer, sizeof(*buffer));
 }
 
 int main() {
@@ -111,12 +112,12 @@ int main() {
 	 */
 
 	unsigned long long rnum;
-	unsigned long long rnum2[2];
+	PwdData rnum2;
 	char pwd[16];
 
-	FillRand(rnum2);
+	FillRand(&rnum2);
 
-	rnum = rnum2[0];
+	rnum = rnum2.u64[0];
 
 	/*
 	 * It is guaranteed that the password contains at least one:
@@ -135,7 +136,7 @@ int main() {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
 
-	rnum = rnum2[1];
+	rnum = rnum2.u64[1];
 
 	for (int i = 10; i < 16; i++) {
 		pwd[i] = PullModulo(&rnum, 94, '!');
@@ -146,6 +147,6 @@ int main() {
 	Swap(pwd, 2, PullModulo(&rnum, 13, 2));
 	Swap(pwd, 3, PullModulo(&rnum, 12, 3));
 
-	printf("%.16s %.6d %016llx%016llx\n", pwd, (int)(rnum2[0] % 1000000), rnum2[0], rnum2[1]);
+	printf("%.16s %.6d %016llx%016llx\n", pwd, (int)(rnum2.u64[0] % 1000000), rnum2.u64[0], rnum2.u64[1]);
 	return 0;
 }

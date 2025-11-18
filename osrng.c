@@ -3,7 +3,7 @@
 #include <winternl.h>
 #include <winioctl.h>
 
-#pragma comment(lib, "NTDLL.Lib")
+#pragma comment(lib, "ntdll.lib")
 
 #define RTL_CONSTANT_STRING(s) { sizeof(s) - sizeof((s)[0]), sizeof(s), s }
 
