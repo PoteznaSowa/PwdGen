@@ -107,7 +107,7 @@ int main() {
 	/*
 	 * Generate and show random text which consists of:
 	 * - 16 ASCII characters;
-	 * - 6 decimal digits;
+	 * - 16 decimal digits;
 	 * - 32 hexadecimal digits.
 	 */
 
@@ -147,6 +147,6 @@ int main() {
 	Swap(pwd, 2, PullModulo(&rnum, 13, 2));
 	Swap(pwd, 3, PullModulo(&rnum, 12, 3));
 
-	printf("%.16s %.6d %016llx%016llx\n", pwd, (int)(rnum2.u64[0] % 1000000), rnum2.u64[0], rnum2.u64[1]);
+	printf("%.16s %.16llu %016llx%016llx\n", pwd, rnum2.u64[0] % 10'000'000'000'000'000, rnum2.u64[0], rnum2.u64[1]);
 	return 0;
 }
