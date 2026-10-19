@@ -98,7 +98,7 @@ void OsRng(void* buffer, unsigned length) {
 	);
 	ULONG ioctl = IOCTL_KSEC_RNG_REKEY;
 	NtDeviceIoControlFile(h, NULL, NULL, NULL, &iosb, ioctl, NULL, length, buffer, length);
-	CloseHandle(h);
+	NtClose(h);
 #endif
 
 #else	// _WIN32

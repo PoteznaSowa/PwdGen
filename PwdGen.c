@@ -106,14 +106,14 @@ static void FillRand(PwdData* buffer) {
 int main() {
 	/*
 	 * Generate and show random text which consists of:
-	 * - 16 ASCII characters;
+	 * - 18 ASCII characters;
 	 * - 16 decimal digits;
 	 * - 32 hexadecimal digits.
 	 */
 
 	unsigned long long rnum;
 	PwdData rnum2;
-	char pwd[16];
+	char pwd[18];
 
 	FillRand(&rnum2);
 
@@ -138,15 +138,15 @@ int main() {
 
 	rnum = rnum2.u64[1];
 
-	for (int i = 10; i < 16; i++) {
+	Swap(pwd, 0, PullModulo(&rnum, 9, 0));
+	Swap(pwd, 1, PullModulo(&rnum, 8, 1));
+	Swap(pwd, 2, PullModulo(&rnum, 7, 2));
+	Swap(pwd, 3, PullModulo(&rnum, 6, 3));
+
+	for (int i = 10; i < 18; i++) {
 		pwd[i] = PullModulo(&rnum, 94, '!');
 	}
 
-	Swap(pwd, 0, PullModulo(&rnum, 15, 0));
-	Swap(pwd, 1, PullModulo(&rnum, 14, 1));
-	Swap(pwd, 2, PullModulo(&rnum, 13, 2));
-	Swap(pwd, 3, PullModulo(&rnum, 12, 3));
-
-	printf("%.16s %.16llu %016llx%016llx\n", pwd, rnum2.u64[0] % 10'000'000'000'000'000, rnum2.u64[0], rnum2.u64[1]);
+	printf("%.18s %.16llu %016llx%016llx\n", pwd, rnum2.u64[0] % 10'000'000'000'000'000, rnum2.u64[0], rnum2.u64[1]);
 	return 0;
 }
