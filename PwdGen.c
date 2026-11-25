@@ -8,6 +8,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdalign.h>
 #include "osrng.h"
 
 /*
@@ -112,7 +113,7 @@ int main() {
 	 */
 
 	unsigned long long rnum;
-	PwdData rnum2;
+	alignas(sizeof(PwdData)) PwdData rnum2;
 	char pwd[18];
 
 	FillRand(&rnum2);
